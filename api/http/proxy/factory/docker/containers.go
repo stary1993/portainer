@@ -198,17 +198,16 @@ func (transport *Transport) decorateContainerCreationOperation(request *http.Req
 		return nil, err
 	}
 
-	if !settings.AllowPrivilegedModeForRegularUsers &&
-		partialContainer.HostConfig.Privileged &&
-		((rbacExtension != nil && !endpointResourceAccess && tokenData.Role != portainer.AdministratorRole) ||
-			(rbacExtension == nil && tokenData.Role != portainer.AdministratorRole)) {
-		return nil, errors.New("forbidden to use privileged mode")
-	}
+	isAdmin := tokenData.Role == portainer.AdministratorRole || (rbacExtension != nil && endpointResourceAccess)
 
-	if settings.DisableDeviceMappingForRegularUsers &&
-		tokenData.Role != portainer.AdministratorRole &&
-		len(partialContainer.HostConfig.Devices) > 0 {
-		return nil, errors.New("forbidden to use device mapping")
+	if !isAdmin {
+		if !settings.AllowPrivilegedModeForRegularUsers && partialContainer.HostConfig.Privileged {
+			return nil, errors.New("forbidden to use privileged mode")
+		}
+
+		if settings.DisableDeviceMappingForRegularUsers && len(partialContainer.HostConfig.Devices) > 0 {
+			return nil, errors.New("forbidden to use device mapping")
+		}
 	}
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
