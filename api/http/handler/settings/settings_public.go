@@ -20,6 +20,7 @@ type publicSettingsResponse struct {
 	ExternalTemplates                     bool                           `json:"ExternalTemplates"`
 	OAuthLoginURI                         string                         `json:"OAuthLoginURI"`
 	DisableStackManagementForRegularUsers bool                           `json:"DisableStackManagementForRegularUsers"`
+	DisableDeviceMappingForRegularUsers   bool                           `json:"DisableDeviceMappingForRegularUsers"`
 }
 
 // GET request on /api/settings/public
@@ -30,14 +31,15 @@ func (handler *Handler) settingsPublic(w http.ResponseWriter, r *http.Request) *
 	}
 
 	publicSettings := &publicSettingsResponse{
-		LogoURL:                            settings.LogoURL,
-		AuthenticationMethod:               settings.AuthenticationMethod,
-		AllowBindMountsForRegularUsers:     settings.AllowBindMountsForRegularUsers,
-		AllowPrivilegedModeForRegularUsers: settings.AllowPrivilegedModeForRegularUsers,
-		AllowVolumeBrowserForRegularUsers:  settings.AllowVolumeBrowserForRegularUsers,
-		EnableHostManagementFeatures:       settings.EnableHostManagementFeatures,
-		EnableEdgeComputeFeatures:          settings.EnableEdgeComputeFeatures,
-		ExternalTemplates:                  false,
+		LogoURL:                             settings.LogoURL,
+		AuthenticationMethod:                settings.AuthenticationMethod,
+		AllowBindMountsForRegularUsers:      settings.AllowBindMountsForRegularUsers,
+		AllowPrivilegedModeForRegularUsers:  settings.AllowPrivilegedModeForRegularUsers,
+		AllowVolumeBrowserForRegularUsers:   settings.AllowVolumeBrowserForRegularUsers,
+		EnableHostManagementFeatures:        settings.EnableHostManagementFeatures,
+		EnableEdgeComputeFeatures:           settings.EnableEdgeComputeFeatures,
+		ExternalTemplates:                   false,
+		DisableDeviceMappingForRegularUsers: settings.DisableDeviceMappingForRegularUsers,
 		OAuthLoginURI: fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&scope=%s&prompt=login",
 			settings.OAuthSettings.AuthorizationURI,
 			settings.OAuthSettings.ClientID,

@@ -434,6 +434,7 @@ type (
 		EdgeAgentCheckinInterval              int                  `json:"EdgeAgentCheckinInterval"`
 		EnableEdgeComputeFeatures             bool                 `json:"EnableEdgeComputeFeatures"`
 		DisableStackManagementForRegularUsers bool                 `json:"DisableStackManagementForRegularUsers"`
+		DisableDeviceMappingForRegularUsers   bool                 `json:"DisableDeviceMappingForRegularUsers"`
 
 		// Deprecated fields
 		DisplayDonationHeader       bool
