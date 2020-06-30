@@ -156,7 +156,8 @@ func containerHasBlackListedLabel(containerLabels map[string]interface{}, labelB
 func (transport *Transport) decorateContainerCreationOperation(request *http.Request, resourceIdentifierAttribute string, resourceType portainer.ResourceControlType) (*http.Response, error) {
 	type PartialContainer struct {
 		HostConfig struct {
-			Privileged bool `json:"Privileged"`
+			Privileged bool          `json:"Privileged"`
+			Devices    []interface{} `json:"Devices"`
 		} `json:"HostConfig"`
 	}
 
@@ -181,32 +182,36 @@ func (transport *Transport) decorateContainerCreationOperation(request *http.Req
 		endpointResourceAccess = true
 	}
 
-	if (rbacExtension != nil && !endpointResourceAccess && tokenData.Role != portainer.AdministratorRole) || (rbacExtension == nil && tokenData.Role != portainer.AdministratorRole) {
-
-		settings, err := transport.settingsService.Settings()
-		if err != nil {
-			return nil, err
-		}
-
-		if !settings.AllowPrivilegedModeForRegularUsers {
-			body, err := ioutil.ReadAll(request.Body)
-			if err != nil {
-				return nil, err
-			}
-
-			partialContainer := &PartialContainer{}
-			err = json.Unmarshal(body, partialContainer)
-			if err != nil {
-				return nil, err
-			}
-
-			if partialContainer.HostConfig.Privileged {
-				return nil, errors.New("forbidden to use privileged mode")
-			}
-
-			request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		}
+	settings, err := transport.settingsService.Settings()
+	if err != nil {
+		return nil, err
 	}
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	partialContainer := &PartialContainer{}
+	err = json.Unmarshal(body, partialContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	if !settings.AllowPrivilegedModeForRegularUsers &&
+		partialContainer.HostConfig.Privileged &&
+		((rbacExtension != nil && !endpointResourceAccess && tokenData.Role != portainer.AdministratorRole) ||
+			(rbacExtension == nil && tokenData.Role != portainer.AdministratorRole)) {
+		return nil, errors.New("forbidden to use privileged mode")
+	}
+
+	if settings.DisableDeviceMappingForRegularUsers &&
+		tokenData.Role != portainer.AdministratorRole &&
+		len(partialContainer.HostConfig.Devices) > 0 {
+		return nil, errors.New("forbidden to use device mapping")
+	}
+
+	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	response, err := transport.executeDockerRequest(request)
 	if err != nil {
